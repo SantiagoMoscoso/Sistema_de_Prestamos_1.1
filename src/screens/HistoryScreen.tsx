@@ -1,17 +1,33 @@
-import { View, Text, Button } from "react-native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../types/navigation";
+// src/screens/HistoryScreen.tsx
+import { View, Text, FlatList } from "react-native";
+import { useLoans } from "../hooks/useLoans";
+import LoanCard from "../components/LoanCard";
+import { historyStyles } from "../styles/historyStyles";
 
-// Este tipo le da a "navigation" y "route" el tipado correcto para ESTA pantalla específica
-type Props = NativeStackScreenProps<RootStackParamList, "History">;
+export default function HistoryScreen() {
+  const { getUserLoans } = useLoans();
+  const loans = getUserLoans();
 
-export default function HistoryScreen({ navigation }: Props) {
+  // Sin préstamos, mostramos un mensaje en vez de una lista vacía y muda
+  if (loans.length === 0) {
+    return (
+      <View style={historyStyles.container}>
+        <Text style={historyStyles.emptyText}>
+          Aún no tienes préstamos. Solicita uno desde el inicio.
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>History Screen</Text>
-      {/* navigation.navigate cambia de pantalla dentro del stack */}
-      <Button title="Ir a Register" onPress={() => navigation.navigate("Register")} />
-      <Button title="Ir a Home" onPress={() => navigation.navigate("Home")} />
+    <View style={historyStyles.container}>
+      {/* FlatList en vez de .map() + ScrollView: es más eficiente en RN,
+          solo renderiza lo que está visible en pantalla */}
+      <FlatList
+        data={loans}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <LoanCard loan={item} />}
+      />
     </View>
   );
 }
