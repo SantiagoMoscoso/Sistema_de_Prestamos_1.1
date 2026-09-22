@@ -1,24 +1,44 @@
-import { createContext, useState, ReactNode } from "react";
+import { createContext, useState, useEffect, ReactNode } from "react";
 import type { User } from "../types/user";
+import { saveData, loadData, StorageKeys } from "../services/storageService";
 
-// Forma de lo que el Context va a exponer a quien lo use
 type AuthContextType = {
   currentUser: User | null;
-  users: User[]; // "base de datos" en memoria de usuarios registrados
-  register: (newUser: User) => boolean; // devuelve true si se registró, false si el email ya existe
-  login: (email: string, password: string) => boolean; // true si las credenciales son correctas
+  users: User[];
+  isLoading: boolean; // nuevo: para saber si ya terminamos de leer el storage
+  register: (newUser: User) => boolean;
+  login: (email: string, password: string) => boolean;
   logout: () => void;
 };
 
-// Valor inicial null: obliga a quien lo consuma a verificar que el Provider exista
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // Arranca en true: al abrir la app, todavía no sabemos qué hay guardado
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Cargar los usuarios guardados, solo una vez al abrir la app
+  useEffect(() => {
+    async function loadStoredUsers() {
+      const stored = await loadData<User[]>(StorageKeys.USERS);
+      if (stored) {
+        setUsers(stored);
+      }
+      setIsLoading(false);
+    }
+    loadStoredUsers();
+  }, []);
+
+  // Guardar automáticamente cada vez que "users" cambie.
+  useEffect(() => {
+    if (!isLoading) {
+      saveData(StorageKeys.USERS, users);
+    }
+  }, [users, isLoading]);
 
   const register = (newUser: User): boolean => {
-    // Evita registrar dos usuarios con el mismo correo
     const exists = users.some((u) => u.email === newUser.email);
     if (exists) return false;
 
@@ -39,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, users, register, login, logout }}>
+    <AuthContext.Provider value={{ currentUser, users, isLoading, register, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
