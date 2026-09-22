@@ -18,8 +18,7 @@ const statusInfo = {
 };
 
 export default function LoanCard({ loan }: Props) {
-  // Estado LOCAL de este card, no del Context: cada tarjeta tiene su
-  // propio input de pago, independiente de las demás
+  // Cada tarjeta tiene su propio input de pago, independiente de las demás
   const [paymentText, setPaymentText] = useState("");
   const [message, setMessage] = useState("");
 

@@ -32,7 +32,7 @@ export default function RegisterScreen({ navigation }: Props) {
     }
 
     const created = register({
-      id: Date.now().toString(), // suficiente como id único para este alcance
+      id: Date.now().toString(),
       name,
       lastName,
       email,
