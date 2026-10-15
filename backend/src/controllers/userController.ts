@@ -5,7 +5,7 @@ import type { CreateUserRequest, LoginRequest, User } from "../types/user";
 
 export async function createUser(req: Request, res: Response) {
   const { name, lastName, email, password } = req.body as CreateUserRequest;
-}   
+}       
 
   // Misma validación que ya hacías en el AuthContext del frontend
 export async function login(req: Request, res: Response) {

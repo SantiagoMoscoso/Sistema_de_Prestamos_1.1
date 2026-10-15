@@ -13,3 +13,14 @@ export type Loan = {
   Status: "approved" | "mora" | "paid";
   CreatedAt: string;
 };
+
+export type RegisterPaymentRequest = {
+  amount: number;
+};
+
+export type Payment = {
+  Id: number;
+  LoanId: number;
+  Amount: number;
+  PaymentDate: string;
+};
