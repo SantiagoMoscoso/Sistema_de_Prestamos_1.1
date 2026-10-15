@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { getPool } from "./config/db";
+import userRoutes from "./routes/userRoutes";
 
 dotenv.config();
 
@@ -15,6 +16,9 @@ app.get("/", (req, res) => {
     message: "CrediFlow API funcionando",
   });
 });
+
+// Todas las rutas de userRoutes quedan activas a partir de aquí
+app.use(userRoutes);
 
 const PORT = process.env.PORT || 3000;
 
