@@ -73,7 +73,6 @@ export async function createLoan(req: Request, res: Response) {
 
 export async function registerPayment(req: Request, res: Response) {
   // req.params trae los valores que van en la URL misma
-  // Por ejemplo: en POST /loans/5/payments, req.params.id va a ser el texto "5"
   const loanId = Number(req.params.id);
   const { amount } = req.body as RegisterPaymentRequest;
 
@@ -102,7 +101,7 @@ export async function registerPayment(req: Request, res: Response) {
 
     // Sumar todos los pagos ya registrados para este préstamo.
     // SUM(Amount) es una función de SQL que suma esa columna para todas
-    // las filas que cumplen el WHERE.
+    // las filas que cumplen el WHERE
     const paidResult = await pool
       .request()
       .input("loanId", sql.Int, loanId)
@@ -136,9 +135,8 @@ export async function registerPayment(req: Request, res: Response) {
         VALUES (@loanId, @amount)
       `);
 
-    // Si con este pago el saldo llega a 0, actualizamos el préstamo a "paid".
-    // Este UPDATE es un query aparte porque ya insertamos el pago arriba;
-    // no se puede hacer todo en un solo comando SQL
+    // Si con este pago el saldo llega a 0, se actualiza el préstamo a "paid".
+    // Este UPDATE es un query aparte porque ya insertamos el pago arriba
     const newBalance = balance - amount;
     if (newBalance <= 0.01) {
       await pool
