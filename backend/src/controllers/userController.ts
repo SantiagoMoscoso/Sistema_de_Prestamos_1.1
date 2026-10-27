@@ -3,11 +3,55 @@ import { getPool } from "../config/db";
 import sql from "mssql";
 import type { CreateUserRequest, LoginRequest, User } from "../types/user";
 
-export async function createUser(req: Request, res: Response) {
-  const { name, lastName, email, password } = req.body as CreateUserRequest;
-}       
 
-  // Misma validación que ya hacías en el AuthContext del frontend
+export async function createUser(req: Request, res: Response) {
+  const { name, lastName, email, password } =
+    req.body as CreateUserRequest;
+
+  if (!name || !lastName || !email || !password) {
+    return res.status(400).json({
+      code: "BAD_REQUEST",
+      message: "Todos los campos son obligatorios",
+    });
+  }
+
+  try {
+    const pool = await getPool();
+
+    const result = await pool
+      .request()
+      .input("name", sql.NVarChar, name)
+      .input("lastName", sql.NVarChar, lastName)
+      .input("email", sql.NVarChar, email)
+      .input("password", sql.NVarChar, password)
+      .query<User>(`
+        INSERT INTO Users (Name, LastName, Email, Password)
+        OUTPUT
+          INSERTED.Id,
+          INSERTED.Name,
+          INSERTED.LastName,
+          INSERTED.Email
+        VALUES (
+          @name,
+          @lastName,
+          @email,
+          @password
+        )
+      `);
+
+    return res.status(201).json(result.recordset[0]);
+
+  } catch (error) {
+    console.error("Error al crear usuario:", error);
+
+    return res.status(500).json({
+      code: "SERVER_ERROR",
+      message: "Error al registrar el usuario",
+    });
+  }
+}    
+
+  // Misma validación que ya habia en el AuthContext del frontend
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body as LoginRequest;
 
