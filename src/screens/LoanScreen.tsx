@@ -9,8 +9,6 @@ import { loanStyles } from "../styles/loanStyles";
 type Props = NativeStackScreenProps<RootStackParamList, "Loan">;
 
 export default function LoanScreen({ navigation }: Props) {
-  // Guardamos los inputs como texto porque así es como TextInput los entrega.
-  // Los convertimos a número solo cuando los necesitamos calcular/enviar.
   const [amountText, setAmountText] = useState("");
   const [installmentsText, setInstallmentsText] = useState("");
   const [error, setError] = useState("");
@@ -18,18 +16,18 @@ export default function LoanScreen({ navigation }: Props) {
 
   const { requestLoan } = useLoans();
 
-  // Number("") da 0, así que el preview no se rompe si el campo está vacío
   const amount = Number(amountText);
   const installments = Number(installmentsText);
 
-  // Solo calculamos y mostramos el preview si ambos campos tienen algo válido
+  // Este preview sigue usando calculateInstallmentValue LOCAL —
+  // no tiene sentido pedírselo al backend solo para mostrar un número
+  // mientras el usuario todavía está escribiendo, antes de confirmar nada
   const showPreview = amount > 0 && installments > 0;
   const previewValue = showPreview ? calculateInstallmentValue(amount, installments) : 0;
 
-  const handleSubmit = () => {
-    // requestLoan ya hace las validaciones de negocio (monto, cuotas, mora)
-    // y nos devuelve el resultado exacto de qué pasó
-    const result = requestLoan(amount, installments);
+  // async, porque ahora espera la respuesta real del backend
+  const handleSubmit = async () => {
+    const result = await requestLoan(amount, installments);
 
     if (!result.success) {
       setError(result.message);
@@ -40,8 +38,6 @@ export default function LoanScreen({ navigation }: Props) {
     setError("");
     setSuccess(result.message);
 
-    // Pequeña pausa para que el usuario alcance a leer el mensaje de éxito
-    // antes de que lo regresemos a Home
     setTimeout(() => navigation.replace("Home"), 800);
   };
 

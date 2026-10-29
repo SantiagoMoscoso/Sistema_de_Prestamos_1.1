@@ -8,11 +8,12 @@ export type Payment = {
 
 export type Loan = {
   id: string;
-  userEmail: string;       // para saber a qué usuario pertenece
-  amount: number;          // monto solicitado
-  installments: number;    // número de cuotas
-  installmentValue: number;// valor de cada cuota (calculado una vez, al crear)
+  userEmail: string;
+  amount: number;
+  installments: number;
+  installmentValue: number;
   payments: Payment[];
   status: LoanStatus;
   createdAt: string;
+  balance?: number; // nuevo: viene calculado directamente del backend
 };
