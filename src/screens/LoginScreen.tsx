@@ -16,26 +16,22 @@ export default function LoginScreen({ navigation }: Props) {
   // Traemos la función login desde el Context, vía el hook
   const { login } = useAuth();
 
-  const handleLogin = () => {
-    // Validación simple antes de intentar el login
-    if (!email || !password) {
-      setError("Ingresa tu correo y contraseña");
-      return;
-    }
+const handleLogin = async () => {
+  if (!email || !password) {
+    setError("Ingresa tu correo y contraseña");
+    return;
+  }
 
-    const success = login(email, password);
+  const result = await login(email, password);
 
-    if (!success) {
-      setError("Correo o contraseña incorrectos");
-      return;
-    }
+  if (!result.success) {
+    setError(result.message);
+    return;
+  }
 
-    // Login correcto: limpiamos el error y navegamos a Home.
-    // "replace" en vez de "navigate" para que el usuario no pueda
-    // volver al Login con el botón de atrás una vez adentro.
-    setError("");
-    navigation.replace("Home");
-  };
+  setError("");
+  navigation.replace("Home");
+};
 
   return (
     <View style={authStyles.container}>

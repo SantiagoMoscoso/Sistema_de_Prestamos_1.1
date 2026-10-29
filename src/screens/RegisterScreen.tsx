@@ -18,37 +18,19 @@ export default function RegisterScreen({ navigation }: Props) {
   // login para abrir sesión automáticamente después
   const { register, login } = useAuth();
 
-  const handleRegister = () => {
-    // Validación de campos vacíos, uno por uno para que el mensaje sea claro
-    if (!name || !lastName || !email || !password) {
-      setError("Completa todos los campos");
-      return;
-    }
+const handleRegister = async () => {
+  // ... validaciones de campos vacíos que ya tenías ...
 
-    // Validación básica de formato de correo
-    if (!email.includes("@")) {
-      setError("Ingresa un correo válido");
-      return;
-    }
+  const result = await register(name, lastName, email, password);
 
-    const created = register({
-      id: Date.now().toString(),
-      name,
-      lastName,
-      email,
-      password,
-    });
+  if (!result.success) {
+    setError(result.message);
+    return;
+  }
 
-    if (!created) {
-      setError("Ya existe una cuenta con ese correo");
-      return;
-    }
-
-    // Registro exitoso: lo logueamos de una vez con las mismas credenciales
-    setError("");
-    login(email, password);
-    navigation.replace("Home");
-  };
+  setError("");
+  navigation.replace("Home");
+};
 
   return (
     // ScrollView en vez de View: con 4 inputs + teclado abierto,

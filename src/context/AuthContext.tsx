@@ -1,57 +1,49 @@
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, ReactNode } from "react";
 import type { User } from "../types/user";
-import { saveData, loadData, StorageKeys } from "../services/storageService";
+import { registerUser, loginUser } from "../services/apiService";
+
+type ActionResult = { success: boolean; message: string };
 
 type AuthContextType = {
   currentUser: User | null;
-  users: User[];
-  isLoading: boolean; // nuevo: para saber si ya terminamos de leer el storage
-  register: (newUser: User) => boolean;
-  login: (email: string, password: string) => boolean;
+  register: (name: string, lastName: string, email: string, password: string) => Promise<ActionResult>;
+  login: (email: string, password: string) => Promise<ActionResult>;
   logout: () => void;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  // Arranca en true: al abrir la app, todavía no sabemos qué hay guardado
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Cargar los usuarios guardados, solo una vez al abrir la app
-  useEffect(() => {
-    async function loadStoredUsers() {
-      const stored = await loadData<User[]>(StorageKeys.USERS);
-      if (stored) {
-        setUsers(stored);
-      }
-      setIsLoading(false);
+  // Ahora es async: espera la respuesta del backend antes de devolver un resultado
+  const register = async (
+    name: string,
+    lastName: string,
+    email: string,
+    password: string
+  ): Promise<ActionResult> => {
+    const result = await registerUser(name, lastName, email, password);
+
+    if (!result.success) {
+      return { success: false, message: result.message };
     }
-    loadStoredUsers();
-  }, []);
 
-  // Guardar automáticamente cada vez que "users" cambie.
-  useEffect(() => {
-    if (!isLoading) {
-      saveData(StorageKeys.USERS, users);
-    }
-  }, [users, isLoading]);
-
-  const register = (newUser: User): boolean => {
-    const exists = users.some((u) => u.email === newUser.email);
-    if (exists) return false;
-
-    setUsers((prev) => [...prev, newUser]);
-    return true;
+    // Si el registro fue exitoso, logueamos automático con los datos que
+    // el backend devolvió
+    setCurrentUser(result.user!);
+    return { success: true, message: result.message };
   };
 
-  const login = (email: string, password: string): boolean => {
-    const found = users.find((u) => u.email === email && u.password === password);
-    if (!found) return false;
+  const login = async (email: string, password: string): Promise<ActionResult> => {
+    const result = await loginUser(email, password);
 
-    setCurrentUser(found);
-    return true;
+    if (!result.success) {
+      return { success: false, message: result.message };
+    }
+
+    setCurrentUser(result.user!);
+    return { success: true, message: result.message };
   };
 
   const logout = () => {
@@ -59,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, users, isLoading, register, login, logout }}>
+    <AuthContext.Provider value={{ currentUser, register, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
