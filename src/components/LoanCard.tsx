@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import type { Loan } from "../types/loan";
-import { calculateBalance } from "../utils/loanCalculations";
 import { useLoans } from "../hooks/useLoans";
 import { historyStyles } from "../styles/historyStyles";
 
@@ -10,7 +9,6 @@ type Props = {
   loan: Loan;
 };
 
-// Diccionario para no repetir if/else de colores y texto en el JSX
 const statusInfo = {
   approved: { label: "Al día", color: "#2F6F5E" },
   mora: { label: "En mora", color: "#B3261E" },
@@ -18,22 +16,25 @@ const statusInfo = {
 };
 
 export default function LoanCard({ loan }: Props) {
-  // Cada tarjeta tiene su propio input de pago, independiente de las demás
   const [paymentText, setPaymentText] = useState("");
   const [message, setMessage] = useState("");
 
-  const { registerPayment, markAsMora } = useLoans();
+  const { registerPayment } = useLoans();
 
-  const balance = calculateBalance(loan);
+  // Ya no se calcula con calculateBalance(loan) — viene directo del backend,
+  // ya calculado, en loan.balance (con ?? 0 por si acaso llega undefined)
+  const balance = loan.balance ?? 0;
   const status = statusInfo[loan.status];
 
-  const handlePay = () => {
+  const handlePay = async () => {
     const amount = Number(paymentText);
-    const result = registerPayment(loan.id, amount);
+
+    // await, porque registerPayment ahora es async (hace una petición al backend)
+    const result = await registerPayment(loan.id, amount);
 
     setMessage(result.message);
     if (result.success) {
-      setPaymentText(""); // limpiamos el input solo si el pago fue válido
+      setPaymentText("");
     }
   };
 
@@ -43,7 +44,6 @@ export default function LoanCard({ loan }: Props) {
         <Text style={historyStyles.amount}>
           ${loan.amount.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
         </Text>
-        {/* Badge de estado, con el color según el diccionario de arriba */}
         <View style={[historyStyles.badge, { backgroundColor: status.color }]}>
           <Text style={historyStyles.badgeText}>{status.label}</Text>
         </View>
@@ -57,7 +57,6 @@ export default function LoanCard({ loan }: Props) {
         Saldo pendiente: ${balance.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
       </Text>
 
-      {/* Solo mostramos el formulario de pago si el préstamo no está pagado */}
       {loan.status !== "paid" && (
         <>
           <View style={historyStyles.payRow}>
@@ -76,12 +75,8 @@ export default function LoanCard({ loan }: Props) {
 
           {message ? <Text style={historyStyles.message}>{message}</Text> : null}
 
-          {/* Botón manual para probar la regla de mora, ver nota al inicio */}
-          {loan.status === "approved" && (
-            <TouchableOpacity onPress={() => markAsMora(loan.id)}>
-              <Text style={historyStyles.moraLink}>Marcar como mora (prueba)</Text>
-            </TouchableOpacity>
-          )}
+          {/* El botón "Marcar como mora" se quitó: ya no existe en LoansContext
+              porque el backend no tiene un endpoint para esa acción */}
         </>
       )}
     </View>

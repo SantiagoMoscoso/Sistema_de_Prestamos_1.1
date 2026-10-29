@@ -1,14 +1,25 @@
-// src/screens/HistoryScreen.tsx
-import { View, Text, FlatList } from "react-native";
+import { useEffect } from "react";
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { useLoans } from "../hooks/useLoans";
 import LoanCard from "../components/LoanCard";
 import { historyStyles } from "../styles/historyStyles";
 
 export default function HistoryScreen() {
-  const { getUserLoans } = useLoans();
-  const loans = getUserLoans();
+  const { loans, isLoadingLoans, refreshLoans } = useLoans();
 
-  // Sin préstamos, mostramos un mensaje en vez de una lista vacía y muda
+  // Al entrar a esta pantalla, pedimos los préstamos actualizados al backend
+  useEffect(() => {
+    refreshLoans();
+  }, []);
+
+  if (isLoadingLoans) {
+    return (
+      <View style={historyStyles.container}>
+        <ActivityIndicator size="large" color="#2F6F5E" />
+      </View>
+    );
+  }
+
   if (loans.length === 0) {
     return (
       <View style={historyStyles.container}>
@@ -21,8 +32,6 @@ export default function HistoryScreen() {
 
   return (
     <View style={historyStyles.container}>
-      {/* FlatList en vez de .map() + ScrollView: es más eficiente en RN,
-          solo renderiza lo que está visible en pantalla */}
       <FlatList
         data={loans}
         keyExtractor={(item) => item.id}
