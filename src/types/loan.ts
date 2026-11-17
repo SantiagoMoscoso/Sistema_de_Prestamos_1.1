@@ -1,4 +1,4 @@
-export type LoanStatus = "approved" | "mora" | "paid";
+export type LoanStatus = "pending" | "approved" | "rejected" | "mora" | "paid";
 
 export type Payment = {
   id: string;
@@ -16,4 +16,16 @@ export type Loan = {
   status: LoanStatus;
   createdAt: string;
   balance?: number; // nuevo: viene calculado directamente del backend
+};
+
+export type PendingLoan = {
+  id: string;
+  clientName: string;
+  email: string;
+  amount: number;
+  installments: number;
+  installmentValue: number;
+  createdAt: string;
+  // Lo que calcula el backend: si cumple las reglas y por qué no
+  rules: { maxAmount: number; activeLoans: number; ok: boolean; reasons: string[] };
 };

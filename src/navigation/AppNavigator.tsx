@@ -9,6 +9,7 @@ import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
 import LoanScreen from "../screens/LoanScreen";
 import HistoryScreen from "../screens/HistoryScreen";
+import AdminScreen from "../screens/AdminScreen";
 
 // Creamos el stack pasándole el tipo, así cada Screen abajo queda validada
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,18 +30,21 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator>
         {currentUser ? (
-          // Con sesión: solo existen estas pantallas
-          <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Loan" component={LoanScreen} />
-            <Stack.Screen name="History" component={HistoryScreen} />
-          </>
-        ) : (
-          // Sin sesión: solo estas
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
+      currentUser.role === "admin" ? (
+    // El admin solo ve su panel
+        <Stack.Screen name="Admin" component={AdminScreen} options={{ headerShown: false }} />
+      ) : (
+        <>
+        <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Loan" component={LoanScreen} />
+          <Stack.Screen name="History" component={HistoryScreen} />
+        </>
+      )
+    ) : (
+      <>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+      </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

@@ -13,6 +13,8 @@ const statusInfo = {
   approved: { label: "Al día", color: "#2F6F5E" },
   mora: { label: "En mora", color: "#B3261E" },
   paid: { label: "Pagado", color: "#5C6B64" },
+  pending: { label: "Pendiente", color: "#C9A227" },
+  rejected: { label: "Rechazado", color: "#8A8F8C" },
 };
 
 export default function LoanCard({ loan }: Props) {
@@ -57,7 +59,7 @@ export default function LoanCard({ loan }: Props) {
         Saldo pendiente: ${balance.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
       </Text>
 
-      {loan.status !== "paid" && (
+      {(loan.status === "approved" || loan.status === "mora") && (
         <>
           <View style={historyStyles.payRow}>
             <TextInput

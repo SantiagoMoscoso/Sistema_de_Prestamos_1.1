@@ -1,6 +1,6 @@
 import { API_URL } from "./apiConfig";
 import type { User } from "../types/user";
-import type { Loan } from "../types/loan";
+import type { Loan, PendingLoan } from "../types/loan";
 import { getToken, saveSession } from "./sessionService";
 
 // AuthContext registra aquí qué hacer cuando el backend dice "token vencido"
@@ -127,7 +127,7 @@ export async function requestLoan(
       return { success: false, message: data.message || "Error al solicitar el préstamo" };
     }
 
-    return { success: true, message: "Préstamo aprobado", loan: mapLoanFromApi(data) };
+    return { success: true, message: "Solicitud aceptada, queda pendiente de aprobacion", loan: mapLoanFromApi(data) };
   } catch (error) {
     console.error("Error de red en requestLoan:", error);
     return { success: false, message: "No se pudo conectar con el servidor" };
@@ -178,3 +178,54 @@ export async function getUserLoans(userId: string): Promise<Loan[]> {
     return [];
   }
 }
+
+// Traduce lo que devuelve el backend (PascalCase) al formato de la app
+function mapPendingFromApi(api: any): PendingLoan {
+  return {
+    id: String(api.Id),
+    clientName: `${api.Name} ${api.LastName}`,
+    email: api.Email,
+    amount: api.Amount,
+    installments: api.Installments,
+    installmentValue: api.InstallmentValue,
+    createdAt: api.CreatedAt,
+    rules: api.rules,
+  };
+}
+
+export async function getPendingLoans(): Promise<PendingLoan[]> {
+  try {
+    const response = await fetch(`${API_URL}/loans/pending`, {
+      headers: await authHeaders(),
+    });
+    checkSession(response);
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return data.map(mapPendingFromApi);
+  } catch (error) {
+    console.error("Error de red en getPendingLoans:", error);
+    return [];
+  }
+}
+
+// Aprobar y rechazar son la misma llamada con distinta acción en la URL
+async function sendDecision(loanId: string, action: "approve" | "reject") {
+  try {
+    const response = await fetch(`${API_URL}/loans/${loanId}/${action}`, {
+      method: "PATCH",
+      headers: await authHeaders(),
+    });
+    checkSession(response);
+
+    const data = await response.json();
+    return { success: response.ok, message: data.message || "Error al procesar" };
+  } catch (error) {
+    console.error("Error de red en sendDecision:", error);
+    return { success: false, message: "No se pudo conectar con el servidor" };
+  }
+}
+
+export const approveLoan = (id: string) => sendDecision(id, "approve");
+export const rejectLoan = (id: string) => sendDecision(id, "reject");
