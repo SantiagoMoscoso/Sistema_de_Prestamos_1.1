@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, ReactNode } from "react";
 import type { User } from "../types/user";
-import { registerUser, loginUser } from "../services/apiService";
+import { registerUser, loginUser, setUnauthorizedHandler } from "../services/apiService";
 import { loadSession, clearSession } from "../services/sessionService";
 
 type ActionResult = { success: boolean; message: string };
@@ -20,11 +20,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadSession().then((user) => {
+  async function restoreSession() {
+    try {
+      const user = await loadSession();
       if (user) setCurrentUser(user);
+    } catch (error) {
+      // Si algo falla (dato dañado, almacén no disponible), lo mostramos
+      // y empezamos sin sesión, en vez de quedarnos cargando para siempre
+      console.error("Error leyendo la sesión:", error);
+      await clearSession().catch(() => {});
+    } finally {
+      // finally corre siempre, haya o no error
       setIsLoading(false);
-    });
-  }, []);
+    }
+  }
+
+  restoreSession();
+}, []);
 
   // Ahora es async: espera la respuesta del backend antes de devolver un resultado
   const register = async (
@@ -60,6 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearSession(); // borra token y datos del usuario del almacén seguro
     setCurrentUser(null);
   };
+
+  useEffect(() => {
+  setUnauthorizedHandler(logout);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ currentUser, register, login, isLoading, logout }}>

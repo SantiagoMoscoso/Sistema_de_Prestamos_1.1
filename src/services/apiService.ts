@@ -3,6 +3,17 @@ import type { User } from "../types/user";
 import type { Loan } from "../types/loan";
 import { getToken, saveSession } from "./sessionService";
 
+// AuthContext registra aquí qué hacer cuando el backend dice "token vencido"
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: () => void) {
+  onUnauthorized = handler;
+}
+
+function checkSession(response: Response) {
+  if (response.status === 401) onUnauthorized?.();
+}
+
 async function authHeaders() {
   const token = await getToken();
   return {
@@ -108,6 +119,7 @@ export async function requestLoan(
       headers: await authHeaders(),
       body: JSON.stringify({ amount, installments }),
     });
+    checkSession(response);
 
     const data = await response.json();
 
@@ -132,6 +144,7 @@ export async function registerPayment(
       headers: await authHeaders(),
       body: JSON.stringify({ amount }),
     });
+    checkSession(response);
 
     const data = await response.json();
 
@@ -151,6 +164,7 @@ export async function getUserLoans(userId: string): Promise<Loan[]> {
     const response = await fetch(`${API_URL}/users/${userId}/loans`, {
       headers: await authHeaders(),
     });
+    checkSession(response);
     const data = await response.json();
 
     if (!response.ok) {

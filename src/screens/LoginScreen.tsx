@@ -30,7 +30,6 @@ const handleLogin = async () => {
   }
 
   setError("");
-  navigation.replace("Home");
 };
 
   return (

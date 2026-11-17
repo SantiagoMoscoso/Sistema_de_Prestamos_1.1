@@ -29,7 +29,6 @@ const handleRegister = async () => {
   }
 
   setError("");
-  navigation.replace("Home");
 };
 
   return (
