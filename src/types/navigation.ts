@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Home: undefined;
   Loan: undefined;
   History: undefined;
+  Admin: undefined;
 };
