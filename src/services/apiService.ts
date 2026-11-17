@@ -1,7 +1,15 @@
 import { API_URL } from "./apiConfig";
 import type { User } from "../types/user";
 import type { Loan } from "../types/loan";
+import { getToken, saveSession } from "./sessionService";
 
+async function authHeaders() {
+  const token = await getToken();
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 // El backend devuelve los campos en PascalCase (Name, LastName, Email, Id numérico)
 // porque así se llaman las columnas en SQL Server. El frontend espera
 // camelCase y un id como texto.
@@ -12,6 +20,7 @@ function mapUserFromApi(apiUser: any): User {
     lastName: apiUser.LastName,
     email: apiUser.Email,
     password: "", // nunca viene del backend, no lo necesitamos guardado localmente
+    role: apiUser.Role,
   };
 }
 
@@ -36,7 +45,9 @@ export async function registerUser(
       return { success: false, message: data.message || "Error al registrar" };
     }
 
-    return { success: true, message: "Registro exitoso", user: mapUserFromApi(data) };
+    const user = mapUserFromApi(data.user);
+    await saveSession(data.token, user);
+    return { success: true, message: "Registro exitoso", user };
   } catch (error) {
     // Esto captura errores de RED (backend apagado, IP mal escrita, sin WiFi),
     // distinto de los errores que el backend mismo devuelve con un status 4xx
@@ -62,7 +73,9 @@ export async function loginUser(
       return { success: false, message: data.message || "Credenciales incorrectas" };
     }
 
-    return { success: true, message: "Login exitoso", user: mapUserFromApi(data) };
+    const user = mapUserFromApi(data.user);
+    await saveSession(data.token, user);
+    return { success: true, message: "Login exitoso", user };
   } catch (error) {
     console.error("Error de red en loginUser:", error);
     return { success: false, message: "No se pudo conectar con el servidor" };
@@ -86,15 +99,14 @@ function mapLoanFromApi(apiLoan: any): Loan {
 }
 
 export async function requestLoan(
-  userId: string,
   amount: number,
   installments: number
 ): Promise<{ success: boolean; message: string; loan?: Loan }> {
   try {
     const response = await fetch(`${API_URL}/loans`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: Number(userId), amount, installments }),
+      headers: await authHeaders(),
+      body: JSON.stringify({ amount, installments }),
     });
 
     const data = await response.json();
@@ -117,7 +129,7 @@ export async function registerPayment(
   try {
     const response = await fetch(`${API_URL}/loans/${loanId}/payments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await authHeaders(),
       body: JSON.stringify({ amount }),
     });
 
@@ -136,7 +148,9 @@ export async function registerPayment(
 
 export async function getUserLoans(userId: string): Promise<Loan[]> {
   try {
-    const response = await fetch(`${API_URL}/users/${userId}/loans`);
+    const response = await fetch(`${API_URL}/users/${userId}/loans`, {
+      headers: await authHeaders(),
+    });
     const data = await response.json();
 
     if (!response.ok) {

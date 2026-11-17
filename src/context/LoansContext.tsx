@@ -38,7 +38,7 @@ export function LoansProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Debes iniciar sesión" };
     }
 
-    const result = await apiRequestLoan(currentUser.id, amount, installments);
+    const result = await apiRequestLoan(amount, installments);
 
     if (!result.success) {
       return { success: false, message: result.message };
