@@ -1,6 +1,7 @@
-import { createContext, useState, ReactNode } from "react";
+import { createContext, useState, useEffect, ReactNode } from "react";
 import type { User } from "../types/user";
 import { registerUser, loginUser } from "../services/apiService";
+import { loadSession, clearSession } from "../services/sessionService";
 
 type ActionResult = { success: boolean; message: string };
 
@@ -8,13 +9,22 @@ type AuthContextType = {
   currentUser: User | null;
   register: (name: string, lastName: string, email: string, password: string) => Promise<ActionResult>;
   login: (email: string, password: string) => Promise<ActionResult>;
-  logout: () => void;
+  isLoading: boolean;
+  logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadSession().then((user) => {
+      if (user) setCurrentUser(user);
+      setIsLoading(false);
+    });
+  }, []);
 
   // Ahora es async: espera la respuesta del backend antes de devolver un resultado
   const register = async (
@@ -46,12 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true, message: result.message };
   };
 
-  const logout = () => {
+  const logout = async  () => {
+    await clearSession(); // borra token y datos del usuario del almacén seguro
     setCurrentUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, register, login, logout }}>
+    <AuthContext.Provider value={{ currentUser, register, login, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

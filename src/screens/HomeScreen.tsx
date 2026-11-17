@@ -9,8 +9,8 @@ type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 export default function HomeScreen({ navigation }: Props) {
   const { currentUser, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout(); // borra token y datos del usuario del almacén seguro
     // replace en vez de navigate: saca a Home del historial,
     // así el usuario no puede volver a Home con el botón de atrás
     navigation.replace("Login");
