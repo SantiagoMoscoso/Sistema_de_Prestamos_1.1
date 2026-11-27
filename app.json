@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "CrediFlow",
-    "slug": "CrediFlow",
+    "slug": "crediflow",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.crediflow.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,7 +24,20 @@
     },
     "plugins": [
       "expo-status-bar",
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "07211902-0fc4-4c62-9950-ecc31eefacd8"
+      }
+    }
   }
 }
