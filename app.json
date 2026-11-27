@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "CrediFlow",
@@ -26,7 +25,19 @@
     "plugins": [
       "expo-status-bar",
       "expo-secure-store",
-      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
-    ]
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "07211902-0fc4-4c62-9950-ecc31eefacd8"
+      }
+    }
   }
 }
